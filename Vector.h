@@ -91,9 +91,9 @@ private:
 		for (uint32_t i = 0; i < m_Size; i++) {
 			new (newBlock + i) T(std::move(m_Data[i]));
 		}
-		//for (uint32_t i = 0; i < m_Size; i++) {
-		//	m_Data[i].~T();
-		//}
+		for (uint32_t i = 0; i < m_Size; i++) {
+			m_Data[i].~T();
+		}
 		::operator delete(m_Data, m_Capacity * sizeof(T));
 		m_Data = newBlock;
 		m_Capacity = newCapacity;
