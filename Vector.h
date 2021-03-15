@@ -75,7 +75,7 @@ public:
 private:
 	T* m_Data = nullptr;
 	uint32_t m_Size = 0;
-	uint32_t m_Capacity = 0; // a growing function, so that not every time an element is added we have to reallocate | reduce number of reallocations
+	uint32_t m_Capacity = 0; // reduce number of reallocations
 
 
 	void ReAlloc(const uint32_t newCapacity) {
@@ -89,11 +89,11 @@ private:
 
 		T* newBlock = (T*)::operator new(newCapacity * sizeof(T));
 		for (uint32_t i = 0; i < m_Size; i++) {
-			newBlock[i] = std::move(m_Data[i]);
+			new (newBlock + i) T(std::move(m_Data[i]));
 		}
-		for (uint32_t i = 0; i < m_Size; i++) {
-			m_Data[i].~T();
-		}
+		//for (uint32_t i = 0; i < m_Size; i++) {
+		//	m_Data[i].~T();
+		//}
 		::operator delete(m_Data, m_Capacity * sizeof(T));
 		m_Data = newBlock;
 		m_Capacity = newCapacity;

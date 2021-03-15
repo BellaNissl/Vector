@@ -1,6 +1,7 @@
 #include "Vector.h"
 #include <string>
 #include <iostream>
+#include <string>
 
 struct Vector3 {
 	float x = 0.0f, y = 0.0f, z = 0.0f;
@@ -80,6 +81,7 @@ void PrintVector(const Vector<Vector3>& vector) {
 int main() {
 
 	Vector<std::string> vector;
+	std::string s = "Blaaa";
 	vector.PushBack("Bla");
 	vector.PushBack("Bla2");
 	vector.PushBack("Bla3");
@@ -89,13 +91,13 @@ int main() {
 	vector.PushBack("Bla3");
 	vector.PushBack("Bla3");
 
-	PrintVector(vector);
-	{
-		Vector<Vector3> vector3;
-		vector3.EmplaceBack(1.0f);
-		vector3.EmplaceBack(1, 2, 3);
-		vector3.EmplaceBack();
+	//PrintVector(vector);
+	//{
+	//	Vector<Vector3> vector3;
+	//	vector3.EmplaceBack(1.0f);
+	//	vector3.EmplaceBack(1, 2, 3);
+	//	vector3.EmplaceBack();
 
-		PrintVector(vector3);
-	}
+	//	PrintVector(vector3);
+	//}
 }
