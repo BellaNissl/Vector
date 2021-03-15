@@ -90,14 +90,15 @@ int main() {
 	vector.PushBack("Bla3");
 	vector.PushBack("Bla3");
 	vector.PushBack("Bla3");
+	PrintVector(vector);
 
-	//PrintVector(vector);
-	//{
-	//	Vector<Vector3> vector3;
-	//	vector3.EmplaceBack(1.0f);
-	//	vector3.EmplaceBack(1, 2, 3);
-	//	vector3.EmplaceBack();
 
-	//	PrintVector(vector3);
-	//}
+	{
+		Vector<Vector3> vector3;
+		vector3.PushBack(Vector3(1.0f));
+		vector3.PushBack(Vector3(1, 2, 3));
+		vector3.PushBack(Vector3());
+
+		PrintVector(vector3);
+	}
 }

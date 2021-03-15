@@ -34,14 +34,14 @@ public:
 		m_Size++;
 	}
 
-	template<typename... Args>
-	T& EmplaceBack(Args&&... args) {
-		if (m_Size >= m_Capacity) {
-			ReAlloc(m_Capacity + m_Capacity / 2);
-		}
-		new(m_Data + m_Size) T(std::forward<Args>(args)...); // construct object in place
-		return m_Data[m_Size++];
-	}
+	//template<typename... Args>
+	//T& EmplaceBack(Args&&... args) {
+	//	if (m_Size >= m_Capacity) {
+	//		ReAlloc(m_Capacity + m_Capacity / 2);
+	//	}
+	//	new(m_Data + m_Size) T(std::forward<Args>(args)...); // construct object in place
+	//	return m_Data[m_Size++];
+	//}
 
 	void PopBack() {
 		if (m_Size > 0) {
@@ -58,13 +58,16 @@ public:
 	}
 
 	const T& operator[](const uint32_t index) const {
-		
-		assert(index >= m_Size);
+		if (index >= m_Size) {
+			//assert
+		}
 		return m_Data[index];
 	}
 
 	T& operator[](const uint32_t index) {
-		assert(index >= m_Size);
+		if (index >= m_Size) {
+			//assert
+		}
 		return m_Data[index];
 	}
 
