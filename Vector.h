@@ -3,104 +3,184 @@
 #include <cassert>
 #include <new>
 #include <stdint.h>
+#include <algorithm>
+#include <iostream>
 
 template<typename T> 
 class Vector {
 public:
-	Vector() {
-		ReAlloc(2);
+	Vector() : m_data(nullptr), m_size(0), m_capacity(0){
 	}
 
 	~Vector() {
-		Clear();
-		::operator delete(m_Data, m_Capacity * sizeof(T));
+		clear();
+		::operator delete(m_data, m_capacity * sizeof(T));
 	}
 
-	void PushBack(const T& value) {
-		if (m_Size >= m_Capacity) {
-			ReAlloc(m_Capacity + m_Capacity / 2);
+	void push_back(const T& value) {
+		uint32_t new_size = m_size + 1;
+		if (new_size >= m_capacity) {
+			re_alloc(new_size);
 		}
 
-		m_Data[m_Size] = value;
-		m_Size++;
+		new(m_data + m_size) T(value);
+		m_size = new_size;
 	}
 
-	void PushBack(T&& value) {
-		if (m_Size >= m_Capacity) {
-			ReAlloc(m_Capacity + m_Capacity / 2);
+	void push_back(T&& value) {
+		uint32_t new_size = m_size + 1;
+		if (new_size >= m_capacity) {
+			re_alloc(new_size); 
 		}
 
-		new(m_Data + m_Size) T(std::move(value)); // make L value to R value
-		m_Size++;
+		new(m_data + m_size) T(std::move(value)); // make L value to R value
+		m_size = new_size;
 	}
 
-	//template<typename... Args>
-	//T& EmplaceBack(Args&&... args) {
-	//	if (m_Size >= m_Capacity) {
-	//		ReAlloc(m_Capacity + m_Capacity / 2);
-	//	}
-	//	new(m_Data + m_Size) T(std::forward<Args>(args)...); // construct object in place
-	//	return m_Data[m_Size++];
-	//}
-
-	void PopBack() {
-		if (m_Size > 0) {
-			m_Size--;
-			m_Data[m_Size].~T();
+	void pop_back() {
+		if (m_size > 0) {
+			m_size--;
+			m_data[m_size].~T();
 		}
 	}
 
-	void Clear() {
-		for (uint32_t i = 0; i < m_Size; i++) {
-			m_Data[i].~T();
+	void erase_by_swap(const uint32_t index) {
+		m_size--;
+		if (index != m_size) {
+			m_data[index] = std::move(m_data[m_size]);
 		}
-		m_Size = 0;
+		m_data[m_size].~T();
+	}
+
+	void erase(const uint32_t index) {
+		erase(index, index);
+	}
+
+	void erase(const uint32_t from, const uint32_t to) {
+		uint32_t start = to + 1;
+		uint32_t diff = m_size - start;
+		
+		for (uint32_t i = 0; i < diff; i++) {
+			m_data[from + i] = std::move(m_data[start + i]);
+		}
+
+		diff = start - from;
+		uint32_t old_size = m_size;
+		for (uint32_t i = old_size - 1; i >= old_size - diff; i--) {
+			m_data[i].~T();
+			m_size--;
+		}
+	}
+
+	void clear() {
+		for (uint32_t i = 0; i < m_size; i++) {
+			m_data[i].~T();
+		}
+		m_size = 0;
 	}
 
 	const T& operator[](const uint32_t index) const {
-		if (index >= m_Size) {
-			//assert
-		}
-		return m_Data[index];
+		return m_data[index];
 	}
 
 	T& operator[](const uint32_t index) {
-		if (index >= m_Size) {
-			//assert
-		}
-		return m_Data[index];
+		return m_data[index];
 	}
 
-	uint32_t Size() const {
-		return m_Size;
+	uint32_t size() const {
+		return m_size;
+	}
+
+	uint32_t capacity(void) const { 
+		return m_capacity; 
+	}
+
+	T* as_array(void) const { 
+		return m_data; 
+	}
+
+	T* begin() const {
+		return m_data;
+	}
+
+	T* end() const {
+		return m_data + m_size;
+	}
+
+	T& at(uint32_t index) {
+		// at is [] with range check
+		assert(index >= 0 && index < m_size);
+		return (*this)[index];
+	}
+
+	const T& at(const uint32_t index) const {
+		// at is [] with range check
+		assert(index >= 0 && index < m_size);
+		return (*this)[index];
+	}
+
+	void reserve(const uint32_t new_capacity) {
+		if (new_capacity <= m_capacity) {
+			return;
+		}
+		re_alloc(new_capacity, true);
+	}
+
+	void resize(const uint32_t new_size, const T& t) {
+		if (new_size == m_size) {
+			return;
+		}
+		if (new_size < m_size) {
+			erase(new_size, m_size - 1);
+			return;
+		}
+		
+		for (uint32_t i = m_size; i < new_size; i++) {
+			push_back(t);
+		}
+		m_size = new_size;
+	}
+
+	void resize(const uint32_t new_size) {
+		resize(new_size, T());
 	}
 
 private:
-	T* m_Data = nullptr;
-	uint32_t m_Size = 0;
-	uint32_t m_Capacity = 0; // reduce number of reallocations
+	T* m_data;
+	uint32_t m_size;
+	uint32_t m_capacity; 
 
-
-	void ReAlloc(const uint32_t newCapacity) {
-		// allocate a new block of memory
-		// move all existing elements into new block
-		// delete old block
-
-		if (newCapacity < m_Size) {
-			m_Size = newCapacity;
+	void re_alloc(const uint32_t new_size, bool absolute = false) {
+		uint32_t new_capacity = new_size;
+		if (new_size < m_size) {
+			m_size = new_size;
+		}
+		else if (absolute) { // true if we want the new capacity to equal exatly the new size
+			new_capacity = new_size;
+		} 
+		else {
+			// reducing number of reallocations by increasing capacity in bigger steps
+			new_capacity = m_size + (m_size / 2); 
+			new_capacity = new_capacity >= new_size ? new_capacity : new_size;
 		}
 
-		T* newBlock = (T*)::operator new(newCapacity * sizeof(T));
-		for (uint32_t i = 0; i < m_Size; i++) {
-			new (newBlock + i) T(std::move(m_Data[i]));
+		// allocating new block of memory
+		T* new_block = (T*)::operator new(new_capacity * sizeof(T));
+
+		// moving all existing elements into new block
+		for (uint32_t i = 0; i < m_size; i++) {
+			new (new_block + i) T(std::move(m_data[i]));
 		}
-		for (uint32_t i = 0; i < m_Size; i++) {
-			m_Data[i].~T();
+
+		// deleting old block
+		for (uint32_t i = 0; i < m_size; i++) {
+			m_data[i].~T();
 		}
-		::operator delete(m_Data, m_Capacity * sizeof(T));
-		m_Data = newBlock;
-		m_Capacity = newCapacity;
+		::operator delete(m_data, m_capacity * sizeof(T));
+
+
+		m_data = new_block;
+		m_capacity = new_capacity;
 	}
-
 };
 
