@@ -34,7 +34,7 @@
 
 template<typename T>
 void PrintVector(const Vector<T>& vector) {
-	for (size_t i = 0; i < vector.Size(); i++) {
+	for (std::size_t i = 0; i < vector.Size(); i++) {
 		std::cout << vector[i] << std::endl;
 	}
 

@@ -36,7 +36,7 @@ public:
 	//	return m_Data[m_Size++];
 	//}
 
-	const T& operator[](size_t index) const {
+	const T& operator[](std::size_t index) const {
 		
 		if (index >= m_Size) {
 			//assert
@@ -44,24 +44,24 @@ public:
 		return m_Data[index];
 	}
 
-	T& operator[](size_t index) {
+	T& operator[](std::size_t index) {
 		if (index >= m_Size) {
 			//assert
 		}
 		return m_Data[index];
 	}
 
-	size_t Size() const {
+	std::size_t Size() const {
 		return m_Size;
 	}
 
 private:
 	T* m_Data;
-	size_t m_Size = 0;
-	size_t m_Capacity = 0; // a growing function, so that not every time an element is added we have to reallocate | reduce number of reallocations
+	std::size_t m_Size = 0;
+	std::size_t m_Capacity = 0; // a growing function, so that not every time an element is added we have to reallocate | reduce number of reallocations
 
 
-	void ReAlloc(size_t newCapacity) {
+	void ReAlloc(std::size_t newCapacity) {
 		// allocate a new block of memory
 		// move all existing elements into new block
 		// delete old block
@@ -70,8 +70,8 @@ private:
 			m_Size = newCapacity;
 		}
 
-		T* newBlock = new T[newCapacity];
-		for (size_t i = 0; i < m_Size; i++) {
+		T* newBlock = (T*)::operator new(newCapacity * sizeof(T));
+		for (std::size_t i = 0; i < m_Size; i++) {
 			newBlock[i] = std::move(m_Data[i]);
 		}
 		delete[] m_Data;
