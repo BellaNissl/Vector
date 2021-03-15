@@ -1,11 +1,19 @@
 #pragma once
 #include <utility>
+#include <cassert>
+#include <new>
+#include <stdint.h>
 
 template<typename T> 
 class Vector {
 public:
 	Vector() {
 		ReAlloc(2);
+	}
+
+	~Vector() {
+		Clear();
+		::operator delete(m_Data, m_Capacity * sizeof(T));
 	}
 
 	void PushBack(const T& value) {
@@ -22,46 +30,55 @@ public:
 			ReAlloc(m_Capacity + m_Capacity / 2);
 		}
 
-		m_Data[m_Size] = std::move(value); // make L value to R value
+		new(m_Data + m_Size) T(std::move(value)); // make L value to R value
 		m_Size++;
 	}
 
-	//template<typename... Args>
-	//T& EmplaceBack(Args&&... args) {
-	//	if (m_Size >= m_Capacity) {
-	//		ReAlloc(m_Capacity + m_Capacity / 2);
-	//	}
+	template<typename... Args>
+	T& EmplaceBack(Args&&... args) {
+		if (m_Size >= m_Capacity) {
+			ReAlloc(m_Capacity + m_Capacity / 2);
+		}
+		new(m_Data + m_Size) T(std::forward<Args>(args)...); // construct object in place
+		return m_Data[m_Size++];
+	}
 
-	//	m_Data[m_Size] = T(std::forward<Args>(args)...); // make L value to R value
-	//	return m_Data[m_Size++];
-	//}
+	void PopBack() {
+		if (m_Size > 0) {
+			m_Size--;
+			m_Data[m_Size].~T();
+		}
+	}
 
-	const T& operator[](std::size_t index) const {
+	void Clear() {
+		for (uint32_t i = 0; i < m_Size; i++) {
+			m_Data[i].~T();
+		}
+		m_Size = 0;
+	}
+
+	const T& operator[](const uint32_t index) const {
 		
-		if (index >= m_Size) {
-			//assert
-		}
+		assert(index >= m_Size);
 		return m_Data[index];
 	}
 
-	T& operator[](std::size_t index) {
-		if (index >= m_Size) {
-			//assert
-		}
+	T& operator[](const uint32_t index) {
+		assert(index >= m_Size);
 		return m_Data[index];
 	}
 
-	std::size_t Size() const {
+	uint32_t Size() const {
 		return m_Size;
 	}
 
 private:
-	T* m_Data;
-	std::size_t m_Size = 0;
-	std::size_t m_Capacity = 0; // a growing function, so that not every time an element is added we have to reallocate | reduce number of reallocations
+	T* m_Data = nullptr;
+	uint32_t m_Size = 0;
+	uint32_t m_Capacity = 0; // a growing function, so that not every time an element is added we have to reallocate | reduce number of reallocations
 
 
-	void ReAlloc(std::size_t newCapacity) {
+	void ReAlloc(const uint32_t newCapacity) {
 		// allocate a new block of memory
 		// move all existing elements into new block
 		// delete old block
@@ -71,10 +88,13 @@ private:
 		}
 
 		T* newBlock = (T*)::operator new(newCapacity * sizeof(T));
-		for (std::size_t i = 0; i < m_Size; i++) {
+		for (uint32_t i = 0; i < m_Size; i++) {
 			newBlock[i] = std::move(m_Data[i]);
 		}
-		delete[] m_Data;
+		for (uint32_t i = 0; i < m_Size; i++) {
+			m_Data[i].~T();
+		}
+		::operator delete(m_Data, m_Capacity * sizeof(T));
 		m_Data = newBlock;
 		m_Capacity = newCapacity;
 	}

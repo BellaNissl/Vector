@@ -1,5 +1,5 @@
 all: main.cpp
-	g++ -std=c++14 -o vector main.cpp -Wall -Wextra -Werror -pedantic
+	clang++ -std=c++14 -o vector main.cpp -Wall -Wextra -Werror -pedantic
 
 run: gcc
 	./vector
