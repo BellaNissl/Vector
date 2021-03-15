@@ -126,7 +126,7 @@ public:
 		re_alloc(new_capacity, true);
 	}
 
-	void resize(const uint32_t new_size, const T& t) {
+	void resize(const uint32_t new_size, T&& t) {
 		if (new_size == m_size) {
 			return;
 		}
@@ -136,7 +136,7 @@ public:
 		}
 		
 		for (uint32_t i = m_size; i < new_size; i++) {
-			push_back(t);
+			push_back(std::move(t));
 		}
 		m_size = new_size;
 	}
