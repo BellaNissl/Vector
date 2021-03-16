@@ -1,10 +1,11 @@
 #include "Vector.h"
-#include <string>
+#include <algorithm>
+#include <iterator>
 #include <iostream>
 #include <string>
-#include <iterator>
-#include <algorithm>
 
+// Test class that prints out move, copy and delete 
+// has a memory_block to check for right deletion behaviour
 struct Vector3 {
 	float x = 0.0f, y = 0.0f, z = 0.0f;
 	int* m_memory_block = nullptr;
@@ -12,7 +13,7 @@ struct Vector3 {
 	Vector3() {
 		m_memory_block = new int[5];
 	}
-	Vector3(float scalar) 
+	explicit Vector3(float scalar) 
 		: x(scalar), y(scalar), z(scalar) {
 		m_memory_block = new int[5];
 	}
@@ -24,11 +25,11 @@ struct Vector3 {
 	Vector3(const Vector3& other)
 		: x(other.x), y(other.y), z(other.z) {
 		m_memory_block = new int[sizeof(other.m_memory_block)];
-		memcpy(m_memory_block, other.m_memory_block, sizeof(&other.m_memory_block));
+		memcpy(m_memory_block, other.m_memory_block, sizeof(*other.m_memory_block));
 		std::cout << "Copy\n";
 	}
 
-	Vector3(Vector3&& other) 
+	Vector3(Vector3&& other) noexcept
 		: x(other.x), y(other.y), z(other.z) {
 		m_memory_block = other.m_memory_block;
 		other.m_memory_block = nullptr;
@@ -40,18 +41,19 @@ struct Vector3 {
 		delete[] m_memory_block;
 	}
 
-	Vector3& operator=(const Vector3& other) {
-		std::cout << "Copy\n";
-		m_memory_block = new int[sizeof(other.m_memory_block)];
-		memcpy(m_memory_block, other.m_memory_block, sizeof(&other.m_memory_block));
-		x = other.x;
-		y = other.y;
-		z = other.z;
-
+	Vector3& operator=(const Vector3& other) noexcept {
+		if (&other != this) {
+			std::cout << "Copy\n";
+			m_memory_block = new int[sizeof(other.m_memory_block)];
+			memcpy(m_memory_block, other.m_memory_block, sizeof(*other.m_memory_block));
+			x = other.x;
+			y = other.y;
+			z = other.z;
+		}
 		return *this;
 	}
 
-	Vector3& operator=(Vector3&& other) {
+	Vector3& operator=(Vector3&& other) noexcept {
 		m_memory_block = other.m_memory_block;
 		other.m_memory_block = nullptr;
 		std::cout << "Move\n";
@@ -91,9 +93,10 @@ void print_vector(const Vector<Vector3>& vector) {
 // printing the vector from raw pointer
 template<typename T>
 void print_as_array(Vector<T>& vector) {	
-	std::cout << "Printing the vector from raw pointer:\n";
+	std::cout << "Printing the vector from array:\n";
+	T* arr = vector.as_array();
 	for (uint32_t i = 0; i < vector.size(); i++) {
-		std::cout << *(vector.as_array() + i) << std::endl;
+		std::cout << arr[i] << std::endl;
 	}
 
 	std::cout << "------------------\n\n";
@@ -103,7 +106,7 @@ void print_as_array(Vector<T>& vector) {
 int main() {
 	std::cout << "Creating string vector and adding some elements:\n";
 	Vector<std::string> vector;
-	std::string s = "Blaaa";
+	std::string s("Blaaa");
 	vector.push_back("Bla0");
 	vector.push_back("Bla1");
 	vector.push_back("Bla2");
