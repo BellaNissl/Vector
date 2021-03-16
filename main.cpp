@@ -2,6 +2,8 @@
 #include <string>
 #include <iostream>
 #include <string>
+#include <iterator>
+#include <algorithm>
 
 struct Vector3 {
 	float x = 0.0f, y = 0.0f, z = 0.0f;
@@ -21,7 +23,8 @@ struct Vector3 {
 
 	Vector3(const Vector3& other)
 		: x(other.x), y(other.y), z(other.z) {
-		m_memory_block = other.m_memory_block;
+		m_memory_block = new int[sizeof(other.m_memory_block)];
+		memcpy(m_memory_block, other.m_memory_block, sizeof(&other.m_memory_block));
 		std::cout << "Copy\n";
 	}
 
@@ -39,8 +42,8 @@ struct Vector3 {
 
 	Vector3& operator=(const Vector3& other) {
 		std::cout << "Copy\n";
-
-		m_memory_block = other.m_memory_block;
+		m_memory_block = new int[sizeof(other.m_memory_block)];
+		memcpy(m_memory_block, other.m_memory_block, sizeof(&other.m_memory_block));
 		x = other.x;
 		y = other.y;
 		z = other.z;
@@ -162,9 +165,11 @@ int main() {
 	{
 		std::cout << "Creating vector3 vector and adding some elements; printing copy, move and delete behaviour:\n";
 		Vector<Vector3> vector3;
+		Vector3 newVec3 = Vector3(2.0f);
 		vector3.push_back(Vector3(1.0f));
 		vector3.push_back(Vector3(1, 2, 3));
 		vector3.push_back(Vector3());
+		vector3.push_back(newVec3);
 
 		std::cout << std::endl;
 		print_vector(vector3);
@@ -180,12 +185,18 @@ int main() {
 		vector3.push_back(Vector3());
 		print_vector(vector3);
 
-		std::cout << "Removing elements on 3:\n";
+		std::cout << "Removing element on 3:\n";
 		vector3.erase(3);
 		print_vector(vector3);
 
 		std::cout << "Resizing Vector to size 8:\n";
 		vector3.resize(8);
+		std::cout << std::endl;
+		print_vector(vector3);
+
+		std::cout << "Resizing Vector to size 10:\n";
+		vector3.resize(10, newVec3);
+		std::cout << std::endl;
 		print_vector(vector3);
 
 		std::cout << "Leaving scope of vector3 vector:\n";

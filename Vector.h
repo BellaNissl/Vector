@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <algorithm>
 #include <iostream>
+#include <string.h>
 
 template<typename T> 
 class Vector {
@@ -137,6 +138,21 @@ public:
 		
 		for (uint32_t i = m_size; i < new_size; i++) {
 			push_back(std::move(t));
+		}
+		m_size = new_size;
+	}
+
+	void resize(const uint32_t new_size, const T& t) {
+		if (new_size == m_size) {
+			return;
+		}
+		if (new_size < m_size) {
+			erase(new_size, m_size - 1);
+			return;
+		}
+
+		for (uint32_t i = m_size; i < new_size; i++) {
+			push_back(t);
 		}
 		m_size = new_size;
 	}
